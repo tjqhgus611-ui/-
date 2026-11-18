@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "schedule-webapp",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-I",
+        "웹앱/app.py"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "schedule-webapp-demo",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set SCHEDULE_DEMO=1&& python -I 웹앱/app.py"
+      ],
+      "port": 8766
+    }
+  ]
+}
