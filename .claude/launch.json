@@ -18,6 +18,21 @@
         "set SCHEDULE_DEMO=1&& python -I 웹앱/app.py"
       ],
       "port": 8766
+    },
+    {
+      "name": "demo-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-I",
+        "-m",
+        "http.server",
+        "8770",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "배포용"
+      ],
+      "port": 8770
     }
   ]
 }

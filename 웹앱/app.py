@@ -19,6 +19,7 @@ PORT = int(os.environ.get('SCHEDULE_PORT') or (8766 if DEMO else 8765))
 spec = importlib.util.spec_from_file_location('build', os.path.join(ROOT, '실처일정', 'scripts', 'build_schedule.py'))
 build = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(build)
+build.BASE = BASE   # 주간 임원일정 등도 같은 폴더(발표용이면 발표용)에서 읽도록 맞춤
 DEPTS, ALIASES = build.DEPTS, build.ALIASES
 DEADLINE_REPLY, DEADLINE_SHARE = '14:00', '17:30'
 
@@ -46,6 +47,8 @@ def dept_status(target):
     unknown = []
     for p in recv:
         stem = os.path.splitext(os.path.basename(p))[0]
+        if '공통' in build.norm(stem):
+            continue   # 공통일정 파일 (실처 파일 아님)
         got = {}
         try:
             got = build.extract_dept(p)

@@ -52,3 +52,9 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Vercel 연결 정보
+.vercel/
+
+# 발표용 화면 검사 단어 (실제 자료 단어 목록)
+/웹앱/검사단어.txt
