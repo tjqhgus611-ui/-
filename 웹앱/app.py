@@ -190,6 +190,30 @@ class H(BaseHTTPRequestHandler):
                 return self._send(200, open(p, 'rb').read(), 'image/png')
         return self._send(404, b'not found', 'text/plain')
 
+    def _json(self, code, obj):
+        return self._send(code, json.dumps(obj, ensure_ascii=False).encode('utf-8'), 'application/json; charset=utf-8')
+
+    def do_POST(self):
+        u = urlparse(self.path)
+        q = parse_qs(u.query)
+        # 이 화면에서 누른 요청만 받음 (다른 사이트가 내 PC의 이 주소로 요청을 보내는 것 차단)
+        origin = self.headers.get('Origin', '')
+        if not re.fullmatch(rf'http://(127\.0\.0\.1|localhost):{PORT}', origin):
+            return self._json(403, {'error': '이 화면에서만 사용할 수 있습니다'})
+        target = q.get('date', [''])[0]
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', target):
+            return self._json(400, {'error': '날짜 형식 오류'})
+        if u.path == '/api/open-hwp':
+            p = os.path.join(BASE, target, f'일정취합_{target}.hwpx')
+            if not os.path.exists(p):
+                return self._json(404, {'error': '아직 취합본이 없습니다'})
+            try:
+                os.startfile(p)   # 파일을 두 번 클릭한 것과 같이 PC의 한글로 연다 (자동 실행 보안 창 없음)
+            except Exception as ex:
+                return self._json(500, {'error': f'한글을 열지 못했습니다: {ex}'})
+            return self._json(200, {'ok': True, 'file': os.path.basename(p)})
+        return self._json(404, {'error': 'not found'})
+
     def log_message(self, *a):
         pass
 

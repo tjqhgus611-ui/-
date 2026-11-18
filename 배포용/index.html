@@ -113,13 +113,14 @@
       <h2>취합본 미리보기 <small id="previewName"></small></h2>
       <div id="preview"></div>
       <div class="actions">
-        <button disabled title="다음 단계에서 구현">한글로 열기</button>
+        <button id="openHwp" disabled title="예시 취합본(HWPX)을 내려받습니다">한글 파일 내려받기</button>
         <button disabled title="다음 단계에서 구현">웹에서 수정</button>
         <button class="primary" disabled title="다음 단계에서 구현">승인</button>
         <button disabled title="다음 단계에서 구현">인쇄</button>
         <button disabled title="다음 단계에서 구현">발송</button>
       </div>
-      <div class="note">발표용 화면입니다. 버튼은 동작하지 않으며, 표시된 일정은 모두 예시입니다.</div>
+      <div class="note" id="openMsg"></div>
+      <div class="note">발표용 화면입니다. 표시된 일정은 모두 예시이며, [한글 파일 내려받기] 외의 버튼은 동작하지 않습니다.</div>
     </section>
   </div>
 </main>
@@ -179,6 +180,7 @@ function render() {
     '<ul class="plain">' + s.log.map((l) => `<li><b>${esc(l.time)}</b>${l.detail.map((d) => `<div class="muted">${esc(d)}</div>`).join('')}</li>`).join('') + '</ul>' +
     (s.updates.length ? '<div class="note">10분 갱신: ' + s.updates.map(esc).join(' · ') + '</div>' : '');
 
+  $('openHwp').disabled = !s.steps[1].done;   // 취합본이 있을 때만
   $('previewName').textContent = s.preview || '';
   $('preview').innerHTML = s.preview
     ? `<img alt="취합본 미리보기" src="preview-${s.target}.png">`
@@ -203,6 +205,34 @@ function renderDeadlines() {
     return `<div class="dl ${cls}"><div class="t">${label} ${hm}</div><div class="v">${v}</div></div>`;
   }).join('');
 }
+
+// [한글로 열기] — 내 PC 화면: 한글 실행 / 발표용 정지 화면: 예시 취합본 내려받기
+const STATIC_DOWNLOAD = true;
+$('openHwp').addEventListener('click', async () => {
+  if (!state) return;
+  if (state.steps[state.steps.length - 1].done) {
+    $('deadlines').innerHTML = ['회신 기한', '메일 공유'].map((l) => `<div class="dl past"><div class="t">${l}</div><div class="v">완료</div></div>`).join('');
+    return;
+  }
+  if (STATIC_DOWNLOAD) {
+    const a = document.createElement('a');
+    a.href = `hwpx-${state.target}.hwpx`;
+    a.download = `일정취합_${state.target}(예시).hwpx`;
+    document.body.appendChild(a); a.click(); a.remove();
+    $('openMsg').textContent = '예시 취합본을 내려받았습니다. 파일을 열면 한글로 볼 수 있습니다.';
+    return;
+  }
+  $('openMsg').textContent = '한글을 여는 중…';
+  try {
+    const r = await fetch('/api/open-hwp?date=' + state.target, {method: 'POST'});
+    const j = await r.json();
+    $('openMsg').innerHTML = j.ok
+      ? `<b>${esc(j.file)}</b>을(를) 한글로 열었습니다. 수정을 마치면 저장 후 한글을 닫아 주세요. 열려 있는 동안은 10분 갱신이 파일을 바꾸지 못합니다.`
+      : '<span class="err">' + esc(j.error) + '</span>';
+  } catch (e) {
+    $('openMsg').innerHTML = '<span class="err">요청 실패: ' + esc(e.message) + '</span>';
+  }
+});
 
 $('day').addEventListener('change', (ev) => { selected = ev.target.value; load(); });
 $('reload').addEventListener('click', load);
